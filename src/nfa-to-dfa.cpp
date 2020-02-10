@@ -1,43 +1,62 @@
-// TODO
-// Harus disort
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <algorithm>
 #include <cstdio>
+#include <set>
 
 // size_t = unsigned int
-size_t STATE_NUM = 2;
+size_t STATE_NUM = 3;
 size_t LANG_CHAR = 2;
 
-std::vector<std::vector<std::string>> route(STATE_NUM, std::vector<std::string>(LANG_CHAR));
-std::vector<std::string> state(STATE_NUM);
-
-// string "a,b" -> vector ["a", "b"]
-std::vector<std::string> split(std::string in)
+// Split a string to set
+// "a,b" -> ["a", "b"]
+std::set<std::string> split_to_set(const std::string& in)
 {
-    std::vector<std::string> out;
+	std::set<std::string> out;
     std::string temp;
-    for (auto i = in.begin(); i != in.end(); ++i)
+    for (char i : in)
     {
-        if (*i == ',')
+    	// If there's a comma, then the temp string is appended to
+    	// output vector and clear the temp string
+        if (i == ',')
         {
-            out.push_back(temp);
+            out.insert(temp);
             temp.clear();
         }
         else
         {
-            temp.push_back(*i);
+        	// while it's not comma, add the character to temp string
+            temp.push_back(i);
         }
     }
+
+    // Append the last string to output vector
+    if (!temp.empty())
+	{
+    	out.insert(temp);
+	}
+
     return out;
 }
 
-std::string aggregate(std::vector<std::string> splitted, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route)
+// Aggregate the set from previous defined state
+//
+// e.g
+//
+// --------+------------+------------+
+//         |          0 |          1 |
+// --------+------------+------------+
+//       a |        a,b |          b |
+//       b |          c |          - |
+//
+// If we aggregate a,b 0's character, it will resulting in a,b,c
+std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route)
 {
-    std::string acc;
+	std::set<std::string> set_accumulator;
     for (auto it = splitted.begin(); it != splitted.end(); ++it)
     {
-        // find function
+        // Find each set language character
         int found_on_ith;
         for (found_on_ith = 0; found_on_ith < state->size(); ++found_on_ith)
         {
@@ -47,13 +66,55 @@ std::string aggregate(std::vector<std::string> splitted, size_t lang_nth, std::v
             }
         }
 
-        if (it != splitted.end())
+        // It's exists              It's not a dead state
+        if (it != splitted.end() && (*route)[found_on_ith][lang_nth] != "-")
         {
-            acc += (*route)[found_on_ith][lang_nth];
+        	std::set<std::string> splitted2 = split_to_set((*route)[found_on_ith][lang_nth]);
+			for (const std::string& it2 : splitted2)
+			{
+				set_accumulator.insert(it2);
+			}
         }
     }
 
-    return acc;
+	// If there's no result from aggregation, then it must be a dead state
+    if (set_accumulator.empty())
+	{
+    	return "-";
+	}
+
+	std::string resulting_accumulator;
+    resulting_accumulator += *set_accumulator.begin();
+    for (auto it = ++set_accumulator.begin(); it != set_accumulator.end(); ++it)
+	{
+		resulting_accumulator += ',' + *it;
+	}
+
+    return resulting_accumulator;
+}
+
+std::string set_to_string(const std::set<std::string>& set)
+{
+	std::string out;
+
+	if (set.empty())
+	{
+		return out;
+	}
+
+	// Add the first (0-th) element
+	// a
+	out += *set.begin();
+	// Add the 1-st to n-th element
+	// Add the next element with first
+	// ,b
+	// ,c
+	for (auto it = ++set.begin(); it != set.end(); ++it)
+	{
+		out += "," + *it;
+	}
+
+	return out;
 }
 
 void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route, size_t* size_state)
@@ -62,7 +123,7 @@ void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::
     auto it = std::find(state->begin(), state->end(), current_set);
     if (current_set.empty())
     {
-        (*route)[state_nth][lang_nth] = aggregate(split((*state)[state_nth]), lang_nth, state, route);
+        (*route)[state_nth][lang_nth] = aggregate(split_to_set((*state)[state_nth]), lang_nth, state, route);
         f(state_nth, lang_nth, state, route, size_state);
     }
     else if (it == state->end() && current_set != "-")
@@ -71,7 +132,7 @@ void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::
         std::vector<std::string> empty_routes(LANG_CHAR);
         route->push_back(empty_routes);
         *size_state += 1;
-    } 
+    }
 
     printf("===================================================\n");
     for (int i = 0; i < state->size(); ++i)
@@ -87,15 +148,33 @@ void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::
 
 int main()
 {
+	std::vector<std::vector<std::string>> route(STATE_NUM, std::vector<std::string>(LANG_CHAR));
+	std::vector<std::string> state(STATE_NUM);
+
     state[0] = "a";
     state[1] = "b";
+	state[2] = "c";
 
     // - = dead state
     route[0][0] = "a,b";
-    route[0][1] = "b";
-    route[1][0] = "-";
-    route[1][1] = "-";
-    // route[2][0] & [2][1]
+    route[0][1] = "a,c";
+    route[1][0] = "b";
+    route[1][1] = "c";
+	route[2][0] = "c";
+	route[2][1] = "c,a";
+
+    for (auto &it : state)
+	{
+    	it = set_to_string(split_to_set(it));
+	}
+
+    for (auto &it_ : route)
+	{
+    	for (auto &it: it_)
+		{
+    		it = set_to_string(split_to_set(it));
+		}
+	}
 
     for (int i = 0; i < state.size(); ++i)
     {
