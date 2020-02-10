@@ -12,7 +12,7 @@ Input:
 
 Output:
 - Transition table
-- Graph (Bonus)
+- Graph (Optional)
 ```
 
 ## License
