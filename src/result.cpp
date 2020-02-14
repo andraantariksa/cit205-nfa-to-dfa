@@ -6,9 +6,9 @@
 #include <set>
 #include <gvc.h>
 
-// size_t = unsigned int
-size_t STATE_NUM = 3;
-size_t LANG_CHAR = 2;
+#define DEBUG 0
+
+const char* DEAD_STATE = "∅";
 
 // Split a string to set
 // "a,b" -> ["a", "b"]
@@ -68,7 +68,7 @@ std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vect
 		}
 
 		// It's exists              It's not a dead state
-		if (it != splitted.end() && (*route)[found_on_ith][lang_nth] != "-")
+		if (it != splitted.end() && (*route)[found_on_ith][lang_nth] != DEAD_STATE)
 		{
 			std::set<std::string> splitted2 = split_to_set((*route)[found_on_ith][lang_nth]);
 			for (const std::string& it2 : splitted2)
@@ -81,7 +81,7 @@ std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vect
 	// If there's no result from aggregation, then it must be a dead state
 	if (set_accumulator.empty())
 	{
-		return "-";
+		return DEAD_STATE;
 	}
 
 	std::string resulting_accumulator;
@@ -118,80 +118,88 @@ std::string set_to_string(const std::set<std::string>& set)
 	return out;
 }
 
-void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route, size_t* size_state)
+void f(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route, std::vector<std::string> *language, size_t* size_state)
 {
 	std::string current_set = (*route)[state_nth][lang_nth];
 	auto it = std::find(state->begin(), state->end(), current_set);
 	if (current_set.empty())
 	{
 		(*route)[state_nth][lang_nth] = aggregate(split_to_set((*state)[state_nth]), lang_nth, state, route);
-		f(state_nth, lang_nth, state, route, size_state);
+		f(state_nth, lang_nth, state, route, language, size_state);
 	}
-	else if (it == state->end() && current_set != "-")
+	else if (it == state->end() && current_set != DEAD_STATE)
 	{
 		state->push_back(current_set);
-		std::vector<std::string> empty_routes(LANG_CHAR);
+		std::vector<std::string> empty_routes(language->size());
 		route->push_back(empty_routes);
 		*size_state += 1;
 	}
 
-//	printf("===================================================\n");
-//	for (int i = 0; i < state->size(); ++i)
-//	{
-//		printf("%8s | ", (*state)[i].c_str());
-//		for (int j = 0; j < (*route)[i].size(); ++j)
-//		{
-//			printf("%10s | ", (*route)[i][j].c_str());
-//		}
-//		printf("\n");
-//	}
+#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
+	printf("===================================================\n");
+	for (int i = 0; i < state->size(); ++i)
+	{
+		printf("%8s | ", (*state)[i].c_str());
+		for (int j = 0; j < (*route)[i].size(); ++j)
+		{
+			printf("%10s | ", (*route)[i][j].c_str());
+		}
+		printf("\n");
+	}
+#endif
+#endif
 }
 
 int main()
 {
-	// graphviz
+	std::string starting_state = "q0";
+	std::vector<std::string> final_states = { "q2" };
 
-	Agraph_t *graph;
-	Agnode_t *from, *to;
-	Agedge_t *edge;
+	std::vector<std::string> language;
+	language.push_back("0");
+	language.push_back("1");
 
-	static GVC_t *gvc;
+	std::vector<std::string> state;
+	state.push_back("q0");
+	state.push_back("q1");
+	state.push_back("q2");
 
-	if (!gvc)
-		gvc = gvContext();
-
-	graph = agopen("g", Agdirected, nullptr);
-
-	// end graphviz
-
-	std::vector<std::vector<std::string>> route(STATE_NUM, std::vector<std::string>(LANG_CHAR));
-	std::vector<std::string> state(STATE_NUM);
-
-	state[0] = "a";
-	state[1] = "b";
-	state[2] = "c";
-
+	std::vector<std::vector<std::string>> route;
 	// - = dead state
-	route[0][0] = "a,b";
-	route[0][1] = "a,c";
-	route[1][0] = "b";
-	route[1][1] = "c";
-	route[2][0] = "c";
-	route[2][1] = "c,a";
+	std::vector<std::string> temp;
+	// In state q0
+	temp.push_back("q0,q1");
+	temp.push_back("q0");
+	route.push_back(temp);
+	temp.clear();
+	// In state q1
+	temp.push_back(DEAD_STATE);
+	temp.push_back("q2");
+	route.push_back(temp);
+	temp.clear();
+	// In state q2
+	temp.push_back(DEAD_STATE);
+	temp.push_back(DEAD_STATE);
+	route.push_back(temp);
+	temp.clear();
 
-	for (auto &it : state)
+	// Sort every set in state
+	for (auto &it_state : state)
 	{
-		it = set_to_string(split_to_set(it));
+		it_state = set_to_string(split_to_set(it_state));
 	}
 
-	for (auto &it_ : route)
+	// Sort every route set
+	for (auto &it_state : route)
 	{
-		for (auto &it: it_)
+		for (auto &it_language: it_state)
 		{
-			it = set_to_string(split_to_set(it));
+			it_language = set_to_string(split_to_set(it_language));
 		}
 	}
 
+#ifdef DEBUG
 	for (int i = 0; i < state.size(); ++i)
 	{
 		printf("%8s | ", state[i].c_str());
@@ -201,19 +209,21 @@ int main()
 		}
 		printf("\n");
 	}
+#endif
 
 	size_t size_state = state.size();
-	size_t size_lang = LANG_CHAR;
+	size_t size_lang = language.size();
 	for (int state_nth = 0; state_nth < size_state; ++state_nth)
 	{
 		for (int lang_nth = 0; lang_nth < size_lang; ++lang_nth)
 		{
 			// std::cout << "a" << state_nth << " and " << lang_nth << "\n";
-			f(state_nth, lang_nth, &state, &route, &size_state);
+			f(state_nth, lang_nth, &state, &route, &language, &size_state);
 			// std::cout << "end a\n";
 		}
 	}
 
+#ifdef DEBUG
 	printf("===================================================\n");
 
 	for (int i = 0; i < state.size(); ++i)
@@ -225,29 +235,48 @@ int main()
 		}
 		printf("\n");
 	}
+#endif
 
-//  graphviz
+	GVC_t *gvc = gvContext();
+
+	Agraph_t *graph = agopen("NFA to DFA", Agdirected, nullptr);
+	Agnode_t *from, *to, *start;
+	Agedge_t *edge;
 
 	for (int i = 0; i < state.size(); ++i)
 	{
 		for (int j = 0; j < route[i].size(); ++j)
 		{
-			from = agnode(graph, (char*)std::string(state[i]).c_str(), true);
+			from = agnode(graph, (char*)state[i].c_str(), true);
 			agsafeset(from, "shape", "circle", "");
-			to = agnode(graph, (char*)std::string(route[i][j]).c_str(), true);
+			to = agnode(graph, (char*)route[i][j].c_str(), true);
 			agsafeset(to, "shape", "circle", "");
 			edge = agedge(graph, from, to, "", true);
-			agsafeset(edge, "label", (char*)std::string(1, '0' + j).c_str(), "");
+			agsafeset(edge, "label", (char*)language[j].c_str(), "");
+
+			if (state[i] == starting_state)
+			{
+				start = agnode(graph, "", true);
+				agsafeset(start, "shape", "point", "");
+				agedge(graph, start, from, "", true);
+			}
+
+			for (auto final_state: final_states)
+			{
+				if (state[i].find(final_state) != std::string::npos)
+				{
+					agsafeset(from, "shape", "doublecircle", "");
+					break;
+				}
+			}
 		}
 	}
 
 	gvLayout(gvc, graph, "dot");
-
 	gvRender(gvc, graph, "png", fopen("res.png", "w"));
 
 	gvFreeLayout(gvc, graph);
-
 	agclose(graph);
-// end graphviz
+
 	return 0;
 }

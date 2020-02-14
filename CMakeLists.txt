@@ -3,6 +3,10 @@ project(nfa_to_dfa)
 
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(PkgConfig)
+
+pkg_check_modules(GTKMM gtkmm-3.0)
+
 add_executable(nfa_to_dfa
         src/result.cpp
 #        src/graph.cpp
