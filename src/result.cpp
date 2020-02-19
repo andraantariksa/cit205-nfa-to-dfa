@@ -8,9 +8,8 @@
 
 #define DEBUG 0
 
-const char* DEAD_STATE = "∅";
+const char* DEAD_STATE = "-";
 
-// Split a string to set
 std::set<std::string> split_string_to_set(const std::string& in)
 {
 	std::set<std::string> out;
@@ -80,14 +79,17 @@ std::string set_to_string(const std::set<std::string>& set)
 std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route)
 {
 	std::set<std::string> set_accumulator;
+	// Iterate on the splitted set
 	for (auto it = splitted.begin(); it != splitted.end(); ++it)
 	{
-		// Find each set language character
+		// Find each set on the state
 		int found_on_ith;
 		for (found_on_ith = 0; found_on_ith < state->size(); ++found_on_ith)
 		{
+			// If the set is found on the state
 			if (*it == (*state)[found_on_ith])
 			{
+				// Get out from the iteration
 				break;
 			}
 		}
@@ -95,7 +97,7 @@ std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vect
 		// It's exists              It's not a dead state
 		if (it != splitted.end() && (*route)[found_on_ith][lang_nth] != DEAD_STATE)
 		{
-			// Get all of the set items
+			// Get all of the set items to set_accumulator variable
 			std::set<std::string> splitted2 = split_string_to_set((*route)[found_on_ith][lang_nth]);
 			for (const std::string& it2 : splitted2)
 			{
@@ -110,19 +112,13 @@ std::string aggregate(std::set<std::string> splitted, size_t lang_nth, std::vect
 		return DEAD_STATE;
 	}
 
-	// std::string resulting_accumulator;
-	// resulting_accumulator += *set_accumulator.begin();
-	// for (auto it = ++set_accumulator.begin(); it != set_accumulator.end(); ++it)
-	// {
-	//     resulting_accumulator += ',' + *it;
-	// }
-
 	return set_to_string(set_accumulator);
 }
 
+// Main algorithm of the NFA to DFA
 void solve(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, std::vector<std::vector<std::string>>* route, std::vector<std::string> *language, size_t* size_state)
 {
-	// Current target
+	// Current route target
 	std::string current_set = (*route)[state_nth][lang_nth];
 	// If it is found, it != state->end()
 	auto it = std::find(state->begin(), state->end(), current_set);
@@ -166,7 +162,7 @@ int main()
 	// Starting state can only be one
 	std::string starting_state = "0";
 	// There may be multiple final states
-	std::vector<std::string> final_states = { "0", "1" };
+	std::vector<std::string> final_states = { "1" };
 
 	// Language specification
 	std::vector<std::string> language;
@@ -179,29 +175,35 @@ int main()
 	state.push_back("1");
 	state.push_back("2");
 	state.push_back("3");
+	state.push_back("4");
 
 	// Route has equal length with state, and the inside has equal length with language
 	std::vector<std::vector<std::string>> route;
 	// - = dead state
 	std::vector<std::string> temp;
 	// In state 0
-	temp.push_back("1,2");             // a
-	temp.push_back(DEAD_STATE);        // b
+	temp.push_back("1,2,3");             // a
+	temp.push_back("2,3");        // b
 	route.push_back(temp);
 	temp.clear();
 	// In state 1
 	temp.push_back("1,2");             // a
-	temp.push_back(DEAD_STATE);        // b
+	temp.push_back("2,3");        // b
 	route.push_back(temp);
 	temp.clear();
 	// In state 2
 	temp.push_back(DEAD_STATE);        // a
-	temp.push_back("1,3");             // b
+	temp.push_back("2,3,4");             // b
 	route.push_back(temp);
 	temp.clear();
 	// In state 3
-	temp.push_back("1,2");             // a
-	temp.push_back(DEAD_STATE);        // b
+	temp.push_back("4");             // a
+	temp.push_back("2,3,4");        // b
+	route.push_back(temp);
+	temp.clear();
+	// In state 4
+	temp.push_back(DEAD_STATE);             // a
+	temp.push_back(DEAD_STATE);             // b
 	route.push_back(temp);
 	temp.clear();
 
@@ -273,6 +275,7 @@ int main()
 	Agraph_t *graph = agopen("NFA to DFA", Agdirected, nullptr);
 	Agnode_t *from, *to, *start;
 	Agedge_t *edge;
+	
 	// Iterate on state
 	for (int i = 0; i < state.size(); ++i)
 	{
@@ -316,7 +319,7 @@ int main()
 	// https://en.wikipedia.org/wiki/DOT_(graph_description_language)
 	gvLayout(gvc, graph, "dot");
 	// Save as PNG
-	gvRender(gvc, graph, "png", fopen("res.png", "w"));
+	gvRender(gvc, graph, "png", fopen("result.png", "w"));
 	// Free the memory
 	gvFreeLayout(gvc, graph);
 	agclose(graph);
