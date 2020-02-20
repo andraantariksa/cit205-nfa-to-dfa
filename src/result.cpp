@@ -6,7 +6,7 @@
 #include <set>
 #include <gvc.h>
 
-#define DEBUG 0
+// #define DEBUG 0
 
 const char* DEAD_STATE = "-";
 
@@ -160,53 +160,75 @@ void solve(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, s
 int main()
 {
 	// Starting state can only be one
-	std::string starting_state = "0";
+	std::string starting_state;
+	
+	std::cout << "Starting state: ";
+	std::cin >> starting_state;
+
+	unsigned int total_final_states;
+	std::cout << "Total final states: ";
+	std::cin >> total_final_states;
 
 	// There may be multiple final states
-	std::vector<std::string> final_states = { "1" };
+	std::vector<std::string> final_states;
+
+	for (int i = 0; i < total_final_states; ++i)
+	{
+		std::string temp_final_state;
+		std::cout << i + 1 << ". ";
+		std::cin >> temp_final_state;
+		final_states.push_back(temp_final_state);
+	}
+
+	unsigned int total_language_letter;
+	std::cout << "Total language letter: ";
+	std::cin >> total_language_letter;
 
 	// Language specification
 	std::vector<std::string> language;
-	language.push_back("a");
-	language.push_back("b");
+	
+	for (int i = 0; i < total_language_letter; ++i)
+	{
+		std::string temp_language_letter;
+		std::cout << i + 1 << ". ";
+		std::cin >> temp_language_letter;
+		language.push_back(temp_language_letter);
+	}
+
+	unsigned int total_state;
+	std::cout << "Total state: ";
+	std::cin >> total_state;
 
 	// State specification
 	std::vector<std::string> state;
-	state.push_back("0");
-	state.push_back("1");
-	state.push_back("2");
-	state.push_back("3");
-	state.push_back("4");
+	
+	for (int i = 0; i < total_state; ++i)
+	{
+		std::string temp_state;
+		std::cout << i + 1 << ". ";
+		std::cin >> temp_state;
+		state.push_back(temp_state);
+	}
+
+	std::cout << "Enter the route, separated with space on each language\n";
 
 	// Route has equal length with state, and the inside has equal length with language
 	std::vector<std::vector<std::string>> route;
-	// - = dead state
-	std::vector<std::string> temp;
-	// In state 0
-	temp.push_back("1,2,3");             // a
-	temp.push_back("2,3");        // b
-	route.push_back(temp);
-	temp.clear();
-	// In state 1
-	temp.push_back("1,2");             // a
-	temp.push_back("2,3");        // b
-	route.push_back(temp);
-	temp.clear();
-	// In state 2
-	temp.push_back(DEAD_STATE);        // a
-	temp.push_back("2,3,4");             // b
-	route.push_back(temp);
-	temp.clear();
-	// In state 3
-	temp.push_back("4");             // a
-	temp.push_back("2,3,4");        // b
-	route.push_back(temp);
-	temp.clear();
-	// In state 4
-	temp.push_back(DEAD_STATE);             // a
-	temp.push_back(DEAD_STATE);             // b
-	route.push_back(temp);
-	temp.clear();
+	
+	for (int i = 0; i < total_state; ++i)
+	{
+		std::vector<std::string> temp;
+		std::cout << state[i] << ". ";
+
+		for (int j = 0; j < total_language_letter; ++j)
+		{
+			std::string temp_route_set;
+			std::cin >> temp_route_set;
+			temp.push_back(temp_route_set);
+		}
+		route.push_back(temp);
+	}
+	
 
 	// Iterate the state
 	for (auto &it_state : state)
@@ -224,17 +246,36 @@ int main()
 		}
 	}
 
-#ifdef DEBUG
+// print
+	printf("NFA table\n");
+	for (int i = 0; i < 12 + 13 * language.size(); ++i)
+	{
+		printf("=");
+	}
+	printf("\n");
+
+	printf("%10s |", "State");
+	for (std::string &language_letter: language)
+	{
+		printf("%11s |", language_letter.c_str());
+	}
+	printf("\n");
+
+	for (int i = 0; i < 12 + 13 * language.size(); ++i)
+	{
+		printf("=");
+	}
+	printf("\n");
 	for (int i = 0; i < state.size(); ++i)
 	{
-		printf("%8s | ", state[i].c_str());
+		printf("%10s | ", state[i].c_str());
 		for (int j = 0; j < route[i].size(); ++j)
 		{
 			printf("%10s | ", route[i][j].c_str());
 		}
 		printf("\n");
 	}
-#endif
+// end print table
 
 	// State size are saved because it may be modified when iterating on below
 	size_t size_state = state.size();
@@ -255,26 +296,44 @@ int main()
 		}
 	}
 
-#ifdef DEBUG
-	printf("===================================================\n");
+// print
+	printf("DFA table\n");
+	for (int i = 0; i < 12 + 13 * language.size(); ++i)
+	{
+		printf("=");
+	}
+	printf("\n");
 
+	printf("%10s |", "State");
+	for (std::string &language_letter: language)
+	{
+		printf("%11s |", language_letter.c_str());
+	}
+	printf("\n");
+
+	for (int i = 0; i < 12 + 13 * language.size(); ++i)
+	{
+		printf("=");
+	}
+	printf("\n");
 	for (int i = 0; i < state.size(); ++i)
 	{
-		printf("%8s | ", state[i].c_str());
+		printf("%10s | ", state[i].c_str());
 		for (int j = 0; j < route[i].size(); ++j)
 		{
 			printf("%10s | ", route[i][j].c_str());
 		}
 		printf("\n");
 	}
-#endif
+// end print table
 
 	// Initialize Graphviz
 	GVC_t *gvc = gvContext();
 
 	// Create the graph instance           Use directed graph
 	Agraph_t *graph = agopen("NFA to DFA", Agdirected, nullptr);
-	// agsafeset(graph, "overlap", "scale", "");
+	// Horizontal graph
+	agsafeset(graph, "rankdir", "LR", "");
 	Agnode_t *from, *to, *start;
 	Agedge_t *edge;
 	
