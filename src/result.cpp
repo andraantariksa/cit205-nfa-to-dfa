@@ -159,6 +159,21 @@ void solve(size_t state_nth, size_t lang_nth, std::vector<std::string>* state, s
 
 int main()
 {
+	unsigned int total_state;
+	std::cout << "Total state: ";
+	std::cin >> total_state;
+
+	// State specification
+	std::vector<std::string> state;
+	
+	for (int i = 0; i < total_state; ++i)
+	{
+		std::string temp_state;
+		std::cout << i + 1 << ". ";
+		std::cin >> temp_state;
+		state.push_back(temp_state);
+	}
+
 	// Starting state can only be one
 	std::string starting_state;
 	
@@ -193,21 +208,6 @@ int main()
 		std::cout << i + 1 << ". ";
 		std::cin >> temp_language_letter;
 		language.push_back(temp_language_letter);
-	}
-
-	unsigned int total_state;
-	std::cout << "Total state: ";
-	std::cin >> total_state;
-
-	// State specification
-	std::vector<std::string> state;
-	
-	for (int i = 0; i < total_state; ++i)
-	{
-		std::string temp_state;
-		std::cout << i + 1 << ". ";
-		std::cin >> temp_state;
-		state.push_back(temp_state);
 	}
 
 	std::cout << "Enter the route, separated with space on each language\n";
