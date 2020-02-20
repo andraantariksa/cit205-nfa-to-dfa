@@ -1,0 +1,16 @@
+>Language:
+a,b,c
+
+>Number of state:
+2
+
+>State:
+q0
+q1
+
+>Dead state: -
+>Route:
+>q0.
+q0,q1 q1 q1
+>q1.
+q0,q1 q0 q0

@@ -161,6 +161,7 @@ int main()
 {
 	// Starting state can only be one
 	std::string starting_state = "0";
+
 	// There may be multiple final states
 	std::vector<std::string> final_states = { "1" };
 
@@ -273,6 +274,7 @@ int main()
 
 	// Create the graph instance           Use directed graph
 	Agraph_t *graph = agopen("NFA to DFA", Agdirected, nullptr);
+	// agsafeset(graph, "overlap", "scale", "");
 	Agnode_t *from, *to, *start;
 	Agedge_t *edge;
 	
@@ -289,7 +291,22 @@ int main()
 			agsafeset(to, "shape", "circle", "");
 
 			edge = agedge(graph, from, to, "", true);
-			agsafeset(edge, "label", (char*)language[j].c_str(), "");
+			// Get the edge label
+			char* label_c_string = agget(edge, "label");
+			// If there's no label exists OR The label length is 0
+			if (label_c_string == nullptr || strlen(label_c_string) == 0)
+			{
+				// Set the label as the language
+				agsafeset(edge, "label", (char*)language[j].c_str(), "");
+			}
+			// If there's a label exist
+			else
+			{
+				// Old label + current language
+				std::string label_temp = label_c_string;
+				label_temp += "," + language[j];
+				agsafeset(edge, "label", (char*)label_temp.c_str(), "");
+			}
 
 			// Set starting node if it's a starting state
 			if (state[i] == starting_state)
@@ -306,6 +323,17 @@ int main()
 				if (state[i].find(final_state) != std::string::npos)
 				{
 					agsafeset(from, "shape", "doublecircle", "");
+					break;
+				}
+			}
+
+			// Same with above
+			for (auto final_state: final_states)
+			{
+				// If the string contains ${final_state}, then the to node to double circle
+				if (route[i][j].find(final_state) != std::string::npos)
+				{
+					agsafeset(to, "shape", "doublecircle", "");
 					break;
 				}
 			}
