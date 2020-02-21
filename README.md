@@ -1,11 +1,11 @@
 # Non-deterministic Finite Automata to Deterministic Finite Automata
 
-This repositories are intended for my Formal Language and Automata course projects
+This repositories are intended for my Formal Language and Automata course projects.
 
 ## Task Details
 
 ```
-Create Non-deterministic Finite Automata converter to Deterministic Finite Automata with the following specification
+Create a program to convert Non-deterministic Finite Automata to Deterministic Finite Automata with the following specification.
 
 Input:
 - Transition table
@@ -13,8 +13,13 @@ Input:
 Output:
 - Transition table
 - Graph (Optional)
+- GUI (Optional)
 ```
+
+## Compiling
+
+The program can be compiled using CMake (Version >= 3.16).
 
 ## License
 
-[MIT Licensed](LICENSE)
+Licensed under [MIT License](LICENSE).
