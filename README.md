@@ -1,6 +1,6 @@
 # Non-deterministic Finite Automata to Deterministic Finite Automata
 
-This repositories are intended for my Formal Language and Automata course projects.
+This repositories are dedicated for my Formal Language and Automata course projects.
 
 ## Task Details
 
